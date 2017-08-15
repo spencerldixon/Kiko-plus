@@ -16,11 +16,11 @@ The problem is tables aren't really designed for mobile, so we need to change th
 
 There's a great tutorial from *CSS-Tricks* about this, and we used it to take our tables from this...
 
-![before](/assets/images/responsive-table-before.png)
+![before](/assets/images/responsive_tables_the_right_way/responsive-table-before.png)
 
 to this...
 
-![after](/assets/images/responsive-table-after.png)
+![after](/assets/images/responsive_tables_the_right_way/responsive-table-after.png)
 
 This relys on displaying each of the cells as a block and pushing everything else down. To get the labels, you have to manually set them in the CSS. This is a bit of a pain but I found a nice solution using Sass.
 
