@@ -52,14 +52,18 @@
 
       if (window.DeviceMotionEvent != undefined) {
         window.ondevicemotion = function(e) {
-          ax = event.acceleration.x * 5;
-          ay = event.acceleration.y * 5;
-          document.getElementById("accelerationX").innerHTML = e.acceleration.x;
-          document.getElementById("accelerationY").innerHTML = e.acceleration.y;
+          ax = event.accelerationIncludingGravity.x * 5;
+          ay = event.accelerationIncludingGravity.y * 5;
+          document.getElementById("accelerationX").innerHTML = e.accelerationIncludingGravity.x;
+          document.getElementById("accelerationY").innerHTML = e.accelerationIncludingGravity.y;
 
           // Write X and Y to array
-          xArray.push(e.acceleration.x);
-          yArray.push(e.acceleration.y);
+          xArray.push(e.accelerationIncludingGravity.x);
+          yArray.push(e.accelerationIncludingGravity.y);
+
+          if (xArrayEma > 4 && yArrayEma > 4 || xArrayEma < -4.0 && yArrayEma < -4.0){
+            alert("Phone dropped!"
+          }
 
           // If array is over N, prune the first figure
           if (xArray.length > n) {
