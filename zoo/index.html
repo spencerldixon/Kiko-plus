@@ -45,6 +45,7 @@
       var EMARange = 21; // Sample size for EMA
       var xArray = [];
       var yArray = [];
+      var alertSent = false;
 
       xArray.push(1);
 
@@ -61,8 +62,9 @@
           xArray.push(e.accelerationIncludingGravity.x);
           yArray.push(e.accelerationIncludingGravity.y);
 
-          if (xArrayEma > 4 && yArrayEma > 4 || xArrayEma < -4.0 && yArrayEma < -4.0){
-            alert("Phone dropped!");
+          if (e.accelerationIncludingGravity.x > 2.5 && alertSent == false) {
+            console.log("Phone Dropped!");
+            alertSent == true;
           }
 
           // If array is over N, prune the first figure
