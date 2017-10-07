@@ -43,7 +43,10 @@
 
       var n = 100; // Maximum size to calc EMA
       var EMARange = 21; // Sample size for EMA
-      var xArray = [], yArray = [];
+      var xArray = [];
+      var yArray = [];
+
+      xArray.push(1);
 
       var sphere = document.getElementById("sphere");
 
@@ -53,10 +56,8 @@
           ay = event.accelerationIncludingGravity.y * 5;
           document.getElementById("accelerationX").innerHTML = e.accelerationIncludingGravity.x;
           document.getElementById("accelerationY").innerHTML = e.accelerationIncludingGravity.y;
-          document.getElementById("accelerationZ").innerHTML = e.accelerationIncludingGravity.z;
 
           // Write X and Y to array
-          console.log(e.accelerationIncludingGravity.x);
           xArray.push(e.accelerationIncludingGravity.x);
           yArray.push(e.accelerationIncludingGravity.y);
 
