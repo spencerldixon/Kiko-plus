@@ -56,6 +56,7 @@
           document.getElementById("accelerationZ").innerHTML = e.accelerationIncludingGravity.z;
 
           // Write X and Y to array
+          console.log(e.accelerationIncludingGravity.x);
           xArray.push(e.accelerationIncludingGravity.x);
           yArray.push(e.accelerationIncludingGravity.y);
 
@@ -76,12 +77,6 @@
 
           document.getElementById("xArray").innerHTML = xArray;
           document.getElementById("yArray").innerHTML = xArray;
-
-          if ( e.rotationRate ) {
-            document.getElementById("rotationAlpha").innerHTML = e.rotationRate.alpha;
-            document.getElementById("rotationBeta").innerHTML = e.rotationRate.beta;
-            document.getElementById("rotationGamma").innerHTML = e.rotationRate.gamma;
-          }
         }
 
         setInterval( function() {
