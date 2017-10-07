@@ -60,10 +60,10 @@
           yArray.push(e.accelerationIncludingGravity.y);
 
           // If array is over N, prune the first figure
-          if xArray.length >= n {
+          if (xArray.length >= n) {
             xArray.shift();
           }
-          if yArray.length >= n {
+          if (yArray.length >= n) {
             yArray.shift();
           }
 
