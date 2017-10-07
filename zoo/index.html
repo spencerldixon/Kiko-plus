@@ -25,12 +25,25 @@
       <h1>Drop me to trigger alert!</h1>
       <p><strong>X:</strong> <span id="accelerationX">0.0</span></p>
       <p><strong>Y:</strong> <span id="accelerationY">0.0</span></p>
+
+      <p><strong>X EMA:</strong> <span id="xArrayEma">0.0</span></p>
+      <p><strong>Y EMA:</strong> <span id="yArrayEma">0.0</span></p>
+
+      <p><strong>X Length:</strong> <span id="xArrayLength">0.0</span></p>
+      <p><strong>Y Length:</strong> <span id="yArrayLength">0.0</span></p>
+
+      <p><strong>X Values:</strong> <span id="xArray">0.0</span></p>
+      <p><strong>Y Values:</strong> <span id="yArray">0.0</span></p>
     </div>
 
     <script type="text/javascript">
       var x = 0, y = 0,
         vx = 0, vy = 0,
         ax = 0, ay = 0;
+
+      var n = 100; // Maximum size to calc EMA
+      var EMARange = 21; // Sample size for EMA
+      var xArray = [], yArray = [];
 
       var sphere = document.getElementById("sphere");
 
@@ -41,6 +54,28 @@
           document.getElementById("accelerationX").innerHTML = e.accelerationIncludingGravity.x;
           document.getElementById("accelerationY").innerHTML = e.accelerationIncludingGravity.y;
           document.getElementById("accelerationZ").innerHTML = e.accelerationIncludingGravity.z;
+
+          // Write X and Y to array
+          xArray.push(e.accelerationIncludingGravity.x);
+          yArray.push(e.accelerationIncludingGravity.y);
+
+          // If array is over N, prune the first figure
+          if xArray.length >= n {
+            xArray.shift();
+          }
+          if yArray.length >= n {
+            yArray.shift();
+          }
+
+          // Write array to page
+          document.getElementById("xArrayLength").innerHTML = xArray.length;
+          document.getElementById("yArrayLength").innerHTML = yArray.length;
+
+          document.getElementById("xArrayEma").innerHTML = EMACalc(xArray, EMARange);
+          document.getElementById("yArrayEma").innerHTML = EMACalc(yArray, EMARange);
+
+          document.getElementById("xArray").innerHTML = xArray;
+          document.getElementById("yArray").innerHTML = xArray;
 
           if ( e.rotationRate ) {
             document.getElementById("rotationAlpha").innerHTML = e.rotationRate.alpha;
@@ -76,6 +111,17 @@
         if (y<0) { y = 0; vy = -vy; }
         if (x>document.documentElement.clientWidth-20) { x = document.documentElement.clientWidth-20; vx = -vx; }
         if (y>document.documentElement.clientHeight-20) { y = document.documentElement.clientHeight-20; vy = -vy; }
+      }
+
+      function EMACalc(mArray,mRange) {
+        var k = 2/(mRange + 1);
+        // first item is just the same as the first item in the input
+        emaArray = [mArray[0]];
+        // for the rest of the items, they are computed with the previous one
+        for (var i = 1; i < mArray.length; i++) {
+          emaArray.push(mArray[i] * k + emaArray[i - 1] * (1 - k));
+        }
+        return emaArray;
       }
     </script>
 
