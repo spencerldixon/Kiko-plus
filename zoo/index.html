@@ -62,10 +62,10 @@
           yArray.push(e.accelerationIncludingGravity.y);
 
           // If array is over N, prune the first figure
-          if (xArray.length >= n) {
+          if (xArray.length > n) {
             xArray.shift();
           }
-          if (yArray.length >= n) {
+          if (yArray.length > n) {
             yArray.shift();
           }
 
@@ -73,8 +73,9 @@
           document.getElementById("xArrayLength").innerHTML = xArray.length;
           document.getElementById("yArrayLength").innerHTML = yArray.length;
 
-          document.getElementById("xArrayEma").innerHTML = EMACalc(xArray, EMARange);
-          document.getElementById("yArrayEma").innerHTML = EMACalc(yArray, EMARange);
+          document.getElementById("xArrayEma").innerHTML = sumArray(diff(xArray));
+          document.getElementById("yArrayEma").innerHTML = sumArray(diff(yArray));
+
 
           document.getElementById("xArray").innerHTML = xArray;
           document.getElementById("yArray").innerHTML = xArray;
@@ -107,6 +108,24 @@
         if (y<0) { y = 0; vy = -vy; }
         if (x>document.documentElement.clientWidth-20) { x = document.documentElement.clientWidth-20; vx = -vx; }
         if (y>document.documentElement.clientHeight-20) { y = document.documentElement.clientHeight-20; vy = -vy; }
+      }
+
+      function diff(ary) {
+        var newA = [];
+        for (var i = 1; i < ary.length; i++)  newA.push(ary[i] - ary[i - 1])
+        return newA;
+      }
+
+      function sumArray(array) {
+        for (
+          var
+          index = 0,              // The iterator
+          length = array.length,  // Cache the array length
+          sum = 0;                // The total amount
+          index < length;         // The "for"-loop condition
+          sum += array[index++]   // Add number on each iteration
+        );
+        return sum;
       }
 
       function EMACalc(mArray,mRange) {
