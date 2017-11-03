@@ -1,7 +1,7 @@
 ---
 title: "Neural Networks from Scratch"
 layout: post
-date: 2017-11-03 19:53
+date: 2017-11-02 19:53
 image: '/assets/images/'
 description:
 tag:
