@@ -1,7 +1,7 @@
 ---
 title: "Neural Networks from Scratch"
 layout: post
-date: 2017-11-02 19:53
+date: 2017-11-03 19:53
 image: '/assets/images/'
 description:
 tag:
@@ -192,8 +192,8 @@ Cost at epoch 4000: 0.00132494673741
 Let's see how well our network learned to predict our test set. We can just run `net.forward_propagation(data)` to predict new data on our trained network...
 
 ```python
-print(net.forward_propagation(input_data))
-print(labels)
+print("Predictions...\n", net.forward_propagation(input_data))
+print("Actual...\n", labels)
 
 [[ 0.02039406]
  [ 0.96795662]
