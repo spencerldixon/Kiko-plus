@@ -83,6 +83,8 @@ output              = tf.add(tf.matmul(hidden_out_activated, W2), b2)
 predictions         = tf.nn.softmax(output)
 ```
 
+## Backpropagation
+
 We'll define our cost function next, this is where things start to get a little easier by using Tensorflow...
 
 ```python
