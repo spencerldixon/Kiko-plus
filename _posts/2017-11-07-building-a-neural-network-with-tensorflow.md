@@ -85,7 +85,7 @@ predictions         = tf.nn.softmax(output)
 
 ## Backpropagation
 
-We'll define our cost function next, this is where things start to get a little easier by using Tensorflow...
+We'll define our cost function next, this is where things start to get a little easier by using Tensorflow. As Tensorflow has gone through our forward prop, it automatically knows how to do backprop! We just have to define which cost function we'll be using and how we want to minimise it.
 
 ```python
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(labels * tf.log(predictions), reduction_indices=[1]))
@@ -104,6 +104,8 @@ Instead of calculating the gradients ourselves like last time, Tensorflow let's 
 ```python
 optimiser = tf.train.GradientDescentOptimizer(learning_rate=learning_rate).minimize(cross_entropy)
 ```
+
+## Training
 
 We have to initialise the variables we defined in Tensorflow. We'll also come up with a way to accurately measure how if our prediction was correct...
 
