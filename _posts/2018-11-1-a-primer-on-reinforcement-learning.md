@@ -1,7 +1,7 @@
 ---
 title: "A Primer on Reinforcement Learning: Q-Learning"
 layout: post
-date: 2018-10-24 10:43
+date: 2018-11-1 10:43
 image: '/assets/images/'
 description:
 tag:
