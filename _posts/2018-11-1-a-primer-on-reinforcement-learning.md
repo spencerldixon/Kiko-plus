@@ -61,7 +61,7 @@ We'll do this with a strategy known as *epsilon greedy*. We'll set an `epsilon` 
 
 Frozen Lake is a game where we have to navigate a 4x4 grid of tiles, each of a different surface type. S is our starting point, G is our goal point, F are frozen tiles (safe to step on) and H are holes which we can fall into and lose the game. We'll train an agent to safely navigate from the starting tile to our goal tile using Q-Learning.
 
-```
+```python
 SFFF
 FHFH
 FFFH
@@ -70,7 +70,7 @@ HFFG
 
 We'll first import OpenAI's gym library, which will give us the FrozenLake game, with a nice wrapper to be able to access actions and the state space. We'll also require numpy and random.
 
-```
+```python
 import numpy as np
 import random
 import gym
@@ -78,13 +78,13 @@ import gym
 
 Next we'll start up our FrozenLake game and assign the environment to a variable we can use later on
 
-```
+```python
 env = gym.make("FrozenLake-v0")
 ```
 
 In order to form our Q table, we'll need to know the number of possible actions and states. We'll then create an empty table, initialised with zeros at the moment, that we can later update throughout our training with our Q values, much like how we update weights in a neural network. Our Q table acts like a cheat sheet, reflecting the quality of taking that particular action, at a particular state.
 
-```
+```python
 action_size = env.action_space.n
 state_size = env.observation_space.n
 
@@ -92,7 +92,7 @@ qtable = np.zeros((state_size, action_size))
 print(qtable)
 ```
 
-```
+```python
 [[0. 0. 0. 0.]
  [0. 0. 0. 0.]
  [0. 0. 0. 0.]
@@ -113,7 +113,7 @@ print(qtable)
 
 Let's set some hyperparameters...
 
-```
+```python
 episodes       = 10000      # Total episodes
 max_steps      = 99         # Max moves per episode - stops us exploring infinitely
 
@@ -130,7 +130,7 @@ Firstly, we'll need a function that, over time, will make a gradual progression 
 
 `max_epsilon` is the largest our epsilon can be and represents a full 100% chance we'll explore our environment. Conversely, `min_epsilon` represents a 100% chance that we'll exploit our Q table for the correct answers.
 
-```
+```python
 def reduce_epsilon(episode, min_epsilon=0.01, max_epsilon=1.0, decay_rate=0.001):
     return min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay_rate * episode)
 ```
@@ -141,7 +141,7 @@ Since this is fairly simply logic, we can code this into another helper function
 
 Here we take in some information like our `epsilon`, our `qtable`, `state` and the `env` (environment) and generate a random number. If our number is larger than epsilon, we'll choose to exploit our Q-table by selecting the action with the highest Q-value. If our number is lower than epsilon, we'll explore our environment further by selecting a random action from our action space.
 
-```
+```python
 def select_action(epsilon, qtable, state, env):
     x = random.uniform(0,1)
 
@@ -153,6 +153,17 @@ def select_action(epsilon, qtable, state, env):
         return env.action_space.sample()
 ```
 
+Lastly, we'll need a function to update the values in our Q-table based upon the Bellman equation given our previous state, action taken, reward, and new state...
+
+```python
+def update_qtable(qtable, state, action, reward, new_state, learning_rate, gamma):
+    # Update Q(s,a):= Q(s,a) + lr [R(s,a) + gamma * max Q(s',a') - Q(s,a)]
+    # qtable[new_state,:] : all the actions we can take from new state
+
+    qtable[state, action] = qtable[state, action] + learning_rate * (reward + gamma * np.max(qtable[new_state, :]) - qtable[state, action])
+    return qtable
+```
+
 ## Training our Q-Table
 
 Next up is the bulk of our code. This is where we'll put the pieces together, train our agent, and populate our Q-table.
@@ -161,7 +172,7 @@ For every episode in our total number of `episodes`, we'll firstly reset our env
 
 We'll then take our action and observe the reward and new state returned, which we'll use to update our Q-table. Finally, we'll we'll set our `state` to be the `new_state` that we received by taking an action, reduce `epsilon` to lean slightly more towards exploitation, add our reward to a list so that we can keep track of how we're improving over time, and start the cycle over again until we reach some terminal state in our game (we fall into a hole, or win the game).
 
-```
+```python
 rewards = []
 
 for episode in range(episodes):
@@ -202,7 +213,7 @@ print(qtable)
 
 Once we've populated our Q-table, we can exploit it to play the game successfully. As we're simply following our Q-table, we no longer have to deal with updating our table, or dealing with our exploration vs exploitation trade off. We can simply just follow the policy of selecting the highest value at a given state. With a well trained Q-table, our values should closely reflect the maximum expected reward over time by taking that particular action at that particular state.
 
-```
+```python
 env.reset()
 
 for episode in range(5):
