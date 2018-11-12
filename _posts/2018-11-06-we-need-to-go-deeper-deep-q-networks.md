@@ -53,6 +53,7 @@ from keras import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 import matplotlib.pyplot as plt
+from collections import deque
 ```
 
 Next, we'll build our agent. Note that this is all one class but I'll try to break it up and talk about each method. Pay particular notice to the indentation here.
@@ -62,7 +63,7 @@ Our agent will take in the environment and hold the hyperparameters. We'll use t
 ```python
 class Agent:
     def __init__(self, env):
-        self.memory = []
+        self.memory        = deque(maxlen=600)
         self.state_size    = env.observation_space.shape[0]
         self.action_size   = env.action_space.n
         self.gamma         = 0.95    # discount rate
