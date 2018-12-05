@@ -1,11 +1,11 @@
 ---
 title: "Deep Q-Learning for Space Invaders"
 layout: post
-date: 2018-11-12 10:43
+date: 2019-11-12 10:43
 image: '/assets/images/'
 description:
 tag:
-blog: false
+blog: true
 jemoji:
 author:
 ---

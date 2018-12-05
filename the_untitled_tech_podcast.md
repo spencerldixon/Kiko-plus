@@ -11,7 +11,7 @@ Justin Drake is a researcher for the Ethereum Foundation. His work covers shardi
 
 Watch on Youtube
 
-[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/ZygPVcDszZo/0.jpg)](http://www.youtube.com/watch?v=ZygPVcDszZo)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/ZygPVcDszZo/0.jpg)](https://www.youtube.com/watch?v=ZygPVcDszZo)
 
 Listen on Spotify
 
