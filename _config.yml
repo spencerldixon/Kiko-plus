@@ -59,8 +59,10 @@ nav:
     url:            "/about"
   - name:           "Archive"
     url:            "/archive"
-  - name:           "Tags"
-    url:            "/tags"
+  # - name:           "Tags"
+    # url:            "/tags"
+  - name:           "The Untitled Tech Podcast"
+    url:            "/the-untitled-tech-podcast"
   - name:           "Github"
     url:            "https://github.com/spencerldixon"
 
@@ -85,7 +87,7 @@ defaults:
       layout:       "post"
 
 # jekyll-seo-tag, see: http://www.rubydoc.info/gems/jekyll-seo-tag/1.2.0
-gems:
+plugins:
   - jekyll-seo-tag
   - jekyll-paginate
   - jekyll-admin
