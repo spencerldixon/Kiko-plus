@@ -103,8 +103,8 @@ class DQNetwork:
         self.gamma            = 0.9
         self.epsilon          = 1.0
         self.epsilon_min      = 0.01
-        self.epsilon_decay    = 0.00001
-        self.learning_rate    = 0.00025 # 0.00025
+        self.epsilon_decay    = 0.00003
+        self.learning_rate    = 0.00025
         self.batch_size       = 64
         self.frame_size       = (105, 80)
         self.possible_actions = np.array(np.identity(self.action_size, dtype=int).tolist())
@@ -370,6 +370,8 @@ python -m retro.import ROMS/
 Here's Playing at episode 1. Some times we'll hit the ball accidentally, but we're still in the explore phase, so a lot of our movement is random and jittery.
 
 ![Pong at episode one](/assets/images/deep_q_learning_for_atari_games/pong_ep_1.gif)
+
+Updates coming over the next few days as training completes!
 
 ## Resources
 
