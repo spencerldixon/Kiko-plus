@@ -367,7 +367,9 @@ python -m retro.import ROMS/
 
 ## Results
 
-Coming soon
+Here's Playing at episode 1. Some times we'll hit the ball accidentally, but we're still in the explore phase, so a lot of our movement is random and jittery.
+
+![Pong at episode one](/assets/images/deep_q_learning_for_atari_games/pong_ep_1.gif)
 
 ## Resources
 
