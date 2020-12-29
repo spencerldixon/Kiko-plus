@@ -1,0 +1,102 @@
+I"�<p>Python has made itself the default programming language for data science and machine learning. It’s well documented, simple to use and fun to work with.</p>
+
+<p>But let’s have a look at what happens when we try to add two lists together…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>list = [1,2,3]
+list + list
+
+[1,2,3,1,2,3]
+</code></pre></div></div>
+
+<p>Not what we expected. Lists can’t perform element wise calculations. In fact, it turns out lists in Python have some big limitations which we’ll need to solve if we want to do the kind of heavy maths needed for machine learning.</p>
+
+<p>Enter Numpy. Numpy is a library for Python which adds support for large multidimensional arrays, matrices, and high level mathematical operations on these new datatypes. It’s fairly intuitive but let’s take a look at some examples…</p>
+
+<p>Once we’ve imported the library, we can create a numpy array by passing in a regular Python list…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import numpy as np
+
+list = [1,2,3]
+np_array = np.array(list)
+
+array([1,2,3])
+</code></pre></div></div>
+
+<p>You’ll see it’s just like a regular list, but wrapped in this <code class="language-plaintext highlighter-rouge">array()</code> object. Now let’s revisit our first example…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>np_array + np_array
+
+array([2,4,6])
+</code></pre></div></div>
+
+<p>Something to note; arrays can only contain a single data type. If we were to put a string as an element, even a single element, the entire array would be converted to strings. The same goes for floats etc. Numpy expects uniformity in our data types.</p>
+
+<p>Onto some more features; we can create a random array using numpy’s random function, and passing in the dimensions of our array.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>a = np.random.rand(3,3)
+
+array([[ 0.63294935,  0.18020465,  0.95212327],
+       [ 0.98974435,  0.35659871,  0.86290932],
+       [ 0.46544616,  0.51164278,  0.17143704]])
+</code></pre></div></div>
+
+<p>We can check the shape of our array with the <code class="language-plaintext highlighter-rouge">np.shape(a)</code> method or just by calling <code class="language-plaintext highlighter-rouge">.shape</code> on an existing array…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>a.shape
+
+(3,3)
+</code></pre></div></div>
+
+<p>The values returned are the dimensions, starting with the 0th dimension. Most of the time, this will be <code class="language-plaintext highlighter-rouge">(rows, columns)</code>, although Numpy supports higher dimensional arrays, so it’s entirely possible to have a shape of <code class="language-plaintext highlighter-rouge">(5,5,5,5,5,5,5)</code> or higher, which can be a little confusing to think about.</p>
+
+<p>Accessing attributes is just the same as a list, including the use of the colon to denote all entries in that dimension…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>a = np.array([[1,2,3],[4,5,6]])
+a[0][1]
+
+2
+</code></pre></div></div>
+
+<p>Let’s use the colon to select some ranges. Let’s try all rows, and the middle column (from column 1, up to, but not including, column 2)…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>a[:, 1:2]
+
+array([[2],
+       [5]])
+</code></pre></div></div>
+
+<p>One common operation in machine learning is reshaping arrays. We’ll look at a common example; flattening an image into a single array. We’ll start with an image measuring 28 pixels by 28 pixels, and having a depth of 3 channels (representing the red, green, and blue channels in a colour image)…</p>
+
+<p><img src="/assets/images/numpy_for_dummies/reshape.png" alt="Flattening an image into a single array using reshaping" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>image = np.random.rand(28,28,3)
+
+length  = image.shape[0]
+height  = image.shape[1]
+depth   = image.shape[2]
+
+flat_image = image.reshape(length * height * depth, 1)
+flat_image.shape
+
+(784, 3)
+</code></pre></div></div>
+
+<p>When we have two matrices or arrays of different sizes, for example a 3x3 and a 1x3, numpy will duplicate the smaller array to match the size of the other array.
+This is called broadcasting and will happen on most element wise operations on matrices of different sizes.</p>
+
+<p>It’s probably better illustrated rather than coded. You can see how the smaller arrays are copied in grey to make up the empty space and create a compatible matrix…</p>
+
+<p><img src="/assets/images/numpy_for_dummies/broadcasting.png" alt="Broadcasting copies smaller arrays to make compatible matrices for operations" /></p>
+
+<p>Another vital operation that is used everywhere in machine learning is the dot product. The dot product is the summation of an element wise multiplication of two matrices. The dot product can be called using <code class="language-plaintext highlighter-rouge">np.dot(a, b)</code> where <code class="language-plaintext highlighter-rouge">a</code> and <code class="language-plaintext highlighter-rouge">b</code> are two matrices of the same size. For arrays of one dimension, the dot product will be a number, but for multidimensional arrays, the result will be a matrix of the same size as the input size…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>a = np.random.rand(3,3)
+b = np.random.rand(3,3)
+
+np.dot(a, b)
+
+array([[ 0.35544886,  0.43097739,  0.38872774],
+       [ 0.73062091,  0.67305096,  0.55726258],
+       [ 0.43227186,  0.54603886,  0.46658088]])
+</code></pre></div></div>
+:ET

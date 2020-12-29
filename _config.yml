@@ -1,43 +1,17 @@
-# # # # # # # # # # # # #
-#   K i k o - p l u s   #
-# # # # # # # # # # # # #
-
 # Basic
-name:               "@spencerldixon"
-
-author:
-  #facebook:         your-id
-  #youtubeUser:      your-id
-  #youtubeChannel:   your-id
-  #twitter:          your-id
-  github:            "spencerldixon"
-  #stackoverflow:    your-id
-  #quora:            your-id
-  #linkedin:         your-id
-  #pinterest:        your-id
-  #googlePlus:       your-id
-  #instagram:        your-id
-  #reddit:           your-id
-  #medium:           your-id
-  #tumblr:           your-id
-  #email:            your-id@your-email.com
-
-copyright:
-  year:             2018
-  name:             "Spencer Dixon"
+theme: prosecco
+title: "Spencer Dixon"
+tagline: "Contract Ruby Developer"
+profile_image: 'me2.jpg'
+footer_text: 'Made with Prosecco, a Jekyll theme I made while drinking Prosecco.'
 
 # Google-analytics
 google-analytics:
   id:               ""
 
-# Disqus
-#disqus:
-  #id:               "kiko-plus"
-
 # URL
 url:                "https://spencerldixon.github.io" # the base hostname & protocol for your site
-# url:                "http://localhost:4000" # use this url when you develop
-#baseurl:            "/blog" # the subpath of your site, e.g. /blog
+#url:                "http://localhost:4000" # use this url when you develop
 
 
 # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -50,19 +24,16 @@ paginate_path:      /page:num/
 
 # Markdown
 markdown:           kramdown
+highlighter:        rouge
 kramdown:
   input:            GFM
 
 # Navigation
 nav:
-  - name:           "About"
-    url:            "/about"
+  - name:           "Home"
+    url:            "/"
   - name:           "Archive"
     url:            "/archive"
-  # - name:           "Tags"
-    # url:            "/tags"
-  - name:           "The Untitled Tech Podcast"
-    url:            "/the-untitled-tech-podcast"
   - name:           "Github"
     url:            "https://github.com/spencerldixon"
 
@@ -88,8 +59,7 @@ defaults:
 
 # jekyll-seo-tag, see: http://www.rubydoc.info/gems/jekyll-seo-tag/1.2.0
 plugins:
-  - jekyll-seo-tag
   - jekyll-paginate
-  - jekyll-admin
+  - jemoji
 
 exclude:            [vendor]

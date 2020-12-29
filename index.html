@@ -1,73 +1,62 @@
 ---
-layout: default
+layout: home
 ---
 
-<header class="header">
-  <div class="header-title">
-    <a href="{{ site.url }}{{ site.baseurl }}">{{ site.name }}</a>
-  </div>
-  <h3>Ruby // Elixir // AI // Blockchain</h3>
-  <nav class="header-nav">
-    {% for nav in site.nav %}
-    {% if nav.url contains 'http://' or nav.url contains 'https://' %}
-    <a href="{{ nav.url }}">{{ nav.name }}</a>
-    {% else %}
-    <a href="{{ nav.url | prepend: site.baseurl }}">{{ nav.name }}</a>
-    {% endif %}
-    {% endfor %}
-  </nav>
-</header>
+<div class="tile is-ancestor">
+    <div class="tile is-parent is-vertical">
+        <article class="tile is-child box">
+          <p class="title">👨‍💻 About me</p>
+          <p>
+          	I am a contract ruby developer based in Cambridge UK.
+          </p>
+        </article>
 
-<div class="list">
-{% if site.posts.size == 0 %}
-  <h2>No post found</h2>
-{% else %}
-<!-- This loops through the paginated posts -->
-{% for post in paginator.posts %}
-  <div class="list-post">
-    {% if post.link %}
-    <a href="{{ post.link }}">
-    {% else %}
-    <a href="{{ post.url | prepend: site.baseurl }}">
-    {% endif %}
-      <div class="list-post-date">
-        <time>{{ post.date | date_to_string }}</time>
-      </div>
-      <div class="list-post-title">
-        {{ post.title }}
-      </div>
-      {% if post.description %}
-      <div class="list-post-desc">
-        {{ post.description }}
-      </div>
-      {% endif %}
-    </a>
+        <article class="tile is-child box">
+          <p class="title">📚 Book Club</p>
+          <p class="mb-4">
+          	I run an online non-fiction book club, if you like chatting about social issues with friendly people, you can join us via Zoom on the last sunday of every month. Check out what we're reading this month on Meetup...
+          </p>
+          <a href="https://www.meetup.com/Better-Book-Club" class="button" target="_blank">Better Book Club on Meetup.com</a>
+        </article>
+    </div>
 
+    <div class="tile is-parent is-vertical">
+        <article class="tile is-child box">
+          <p class="title">📥 Get in touch</p>
+          <p>
+          	I'm giving up social media for 2021, the best way to reach me is either email at <script type="text/javascript" language="javascript">
+<!--
+// Email obfuscator script 2.1 by Tim Williams, University of Arizona
+// Random encryption key feature coded by Andrew Moulden
+// This code is freeware provided these four comment lines remain intact
+// A wizard to generate this code is at http://www.jottings.com/obfuscator/
+{ coded = "3kEP8EsggyUttSRyP@aEU.8yQ"
+  key = "gcT2vrYCkiwRtPWUEJ1hDmFjBH8oAzsVbuSOIl0NXZqGapQMxdn9yeL3f647K5"
+  shift=coded.length
+  link=""
+  for (i=0; i<coded.length; i++) {
+    if (key.indexOf(coded.charAt(i))==-1) {
+      ltr = coded.charAt(i)
+      link += (ltr)
+    }
+    else {     
+      ltr = (key.indexOf(coded.charAt(i))-shift+key.length) % key.length
+      link += (key.charAt(ltr))
+    }
+  }
+document.write("<a href='mailto:"+link+"'>"+link+"</a>")
+}
+//-->
+</script><noscript>[Sorry, you need Javascript on to email me]</noscript>, or, if you have my phone number you can message me with Signal.
+          </p>
+        </article>
 
-  </div>
-{% endfor %}
-  <!-- Pagination links -->
-  <div class="list-pagination">
-    <span class="list-pagination-previous">
-      {% if paginator.previous_page %}
-        <a href="{{ paginator.previous_page_path | prepend: site.baseurl }}" class="previous">
-          &#xE000; previous
-        </a>
-      {% else %}
-
-      {% endif %}
-    </span>
-
-    <span class="list-pagination-next">
-      {% if paginator.next_page %}
-        <a href="{{ paginator.next_page_path | prepend: site.baseurl }}" class="next">
-          next &#xE001;
-        </a>
-      {% else %}
-
-      {% endif %}
-    </span>
-
-  </div>
-{% endif %}
+        <article class="tile is-child box">
+          <p class="title">🎸 My Music</p>
+          <p>
+          	Sometimes I make music, check it out on Spotify
+          	<a href="https://open.spotify.com/artist/39av7XW77qYJxyubKbJgV3?si=BD09Q1d3SZurojJyhLeODg" class="button mt-4" target="_blank">Listen on Spotify</a>
+          </p>
+        </article>
+    </div>
 </div>

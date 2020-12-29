@@ -4,7 +4,7 @@ layout: post
 date: 2019-1-1 10:43
 image: '/assets/images/'
 description:
-tag:
+tag: deeplearning, qlearning
 blog: true
 jemoji:
 author:
