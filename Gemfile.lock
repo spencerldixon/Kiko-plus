@@ -1,3 +1,13 @@
+GIT
+  remote: https://github.com/spencerldixon/jekyll-prosecco-theme.git
+  revision: 198a5128a9d4af8cb43952eb23b8051d68e00ab5
+  specs:
+    prosecco (0.1.0)
+      jekyll (~> 4.2)
+      jekyll-paginate
+      jemoji
+      rouge
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -63,11 +73,6 @@ GEM
       mini_portile2 (~> 2.4.0)
     pathutil (0.16.2)
       forwardable-extended (~> 2.6)
-    prosecco (0.1.0)
-      jekyll (~> 4.2)
-      jekyll-paginate
-      jemoji
-      rouge
     public_suffix (4.0.6)
     rb-fsevent (0.10.4)
     rb-inotify (0.10.1)
@@ -89,7 +94,7 @@ PLATFORMS
 
 DEPENDENCIES
   jekyll
-  prosecco
+  prosecco!
 
 RUBY VERSION
    ruby 2.7.2p137
