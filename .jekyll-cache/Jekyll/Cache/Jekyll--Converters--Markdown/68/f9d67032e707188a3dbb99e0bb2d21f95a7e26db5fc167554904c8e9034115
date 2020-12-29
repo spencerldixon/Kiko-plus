@@ -1,0 +1,54 @@
+I"�<p>When it comes to measuring how well our machine learning models do, there’s one metric we tend to reach for first; accuracy.</p>
+
+<p>Accuracy can be thought of as the percentage of correct guesses out of our total number of things we’re guessing…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">total_things</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">correct_guesses</span> <span class="o">=</span> <span class="mi">70</span>
+
+<span class="n">accuracy_percentage</span> <span class="o">=</span> <span class="p">(</span><span class="n">correct_guesses</span> <span class="o">/</span> <span class="n">total_guesses</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+<span class="c1"># Our accuracy is 70%
+</span></code></pre></div></div>
+
+<p>But there’s a huge blind spot with accuracy as a single metric. Accuracy alone just looks at our correct guesses, but what if those were just chance? What if we had a classifier that just randomly guessed and as a result, it guessed 70 of our 100 examples correctly.</p>
+
+<h2 id="precision-vs-recall">Precision vs Recall</h2>
+
+<p>We need to be skeptical about accuracy, and our correct guesses on their own. If we were looking at images of cats and dogs and classifying them, how many of the images we guessed were cats, turned out to actually be cats? Did we miss any images that could’ve been classified as cats but weren’t?</p>
+
+<p>Although these two questions sound similar, take a minute to think them through and understand the difference…</p>
+
+<ul>
+  <li>How many classification attempts were actually correct? (Precision)</li>
+  <li>How much of the dataset did we classify correctly? (Recall)</li>
+</ul>
+
+<p>These metrics are known as <em>Precision</em> and <em>Recall</em> and give us a better look at the performance of our model than just accuracy alone.</p>
+
+<p>To understand these better we need to understand the four possible states our binary guess can be in…</p>
+
+<ul>
+  <li>True Positives (TP): the number of positive examples, labeled correctly as positive.</li>
+  <li>False Positives (FP): the number of negative examples, labeled incorrecly as positive.</li>
+  <li>True Negatives (TN): the number of negative examples, labeled correctly as negative.</li>
+  <li>False Negatives (FN): the number of positive examples, labeled incorrectly as negative.</li>
+</ul>
+
+<h2 id="f1-score">F1 Score</h2>
+
+<p>Now our model has three metrics; accuracy, precision and recall. Which one do we optimise for? Do we sacrifice precision, if we can improve recall? Guessing just a single cat picture correctly would give us a high precision (because we can demonstrate that out of all the guesses we make, we’re very precise in classifying correctly), but we would have a terrible recall (because we’ve only classified one image out of our dataset).</p>
+
+<p>Luckily we can combine precision and recall into a single score to find the best of both worlds. We’ll take the harmonic mean of the two scores (We use the harmonic mean as that’s best for rates and ratios). The harmonic mean calculates the average of the two scores but it also takes into account how similar the two values are. This is called the F1 score…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">precision</span> <span class="o">=</span> <span class="mf">0.84</span>
+<span class="n">recall</span> <span class="o">=</span> <span class="mf">0.72</span>
+
+<span class="n">f1_score</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">precision</span> <span class="o">*</span> <span class="n">recall</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">precision</span> <span class="o">+</span> <span class="n">recall</span><span class="p">)</span>
+
+<span class="c1"># Our F1 Score is 0.775
+</span></code></pre></div></div>
+
+<h2 id="summary">Summary</h2>
+
+<p>Accuracy alone is a bad metric to measure our predictions by. It leaves out vital context like how many did we guess correctly by chance? How many were mislabelled and how much of the dataset did we actually predict correctly? This is where precision and recall can help us. As we may want to make a trade off between precision and recall to get a better and more balanced model, we can use the F1 score to tell us which model is better.</p>
+
+:ET

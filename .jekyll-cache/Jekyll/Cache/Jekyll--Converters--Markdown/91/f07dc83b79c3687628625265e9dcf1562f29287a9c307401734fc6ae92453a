@@ -1,11 +1,6 @@
----
-title: About
-permalink: /about/
----
+I"<p>I am a Software Developer based in Cambridge (UK), interested in Ruby, Elixir, Deep Learning, Blockchain and Business.</p>
 
-I am a Software Developer based in Cambridge (UK), interested in Ruby, Elixir, Deep Learning, Blockchain and Business.
-
-Email me at:
+<p>Email me at:
 <script type="text/javascript" language="javascript">
 <!--
 // Email obfuscator script 2.1 by Tim Williams, University of Arizona
@@ -29,5 +24,6 @@ Email me at:
 document.write("<a href='mailto:"+link+"'>"+link+"</a>")
 }
 //-->
-</script><noscript>Sorry, you need Javascript on to email me.</noscript>
+</script><noscript>Sorry, you need Javascript on to email me.</noscript></p>
 
+:ET
