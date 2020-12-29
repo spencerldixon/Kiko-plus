@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Spencer Dixon</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/vnd.microsoft.icon">
+  <link rel="stylesheet" href="/assets/css/style.css" type="text/css">
+  <link rel="stylesheet" href="/assets/css/markdown_styles.css" type="text/css">
+  <link rel="stylesheet" href="/assets/css/syntax.css" type="text/css">
+</head>
+
+  <body>
+    <div class="container is-max-desktop">
+            <div class="is-flex is-flex-direction-column mt-6 mb-5 is-align-items-center is-justify-content-center">
+        <figure class="image is-128x128 mb-2">
+          <img class="is-rounded" src="/assets/images/me2.jpg">
+        </figure>
+
+        
+        <h1 class="title">Spencer Dixon</h1>
+        <p class="subtitle is-4">Contract Ruby Developer</p>
+      </div>
+
+      <nav class="is-flex is-align-items-center is-justify-content-center is-flex-wrap-wrap mb-6">
+    
+    
+    <a class="button is-rounded m-1" href="/">Home</a>
+    
+    
+    
+    <a class="button is-rounded m-1" href="/archive">Archive</a>
+    
+    
+    
+    <a class="button is-rounded m-1" href="https://github.com/spencerldixon">Github</a>
+    
+    
+  </nav>
+
+      <div class="mb-6 has-text-centered">
+  <h1 class="title is-size-1">Neural Networks from Scratch</h1>
+  <h2 class="subtitle mt-1">02 Nov 2017</h2>
+</div>
+
+<div class="card">
+  <div class="card-content">
+    <p>In this post we’ll take a dive into the maths behind neural networks and how they work by building our own neural network from scratch using Python.</p>
+
+<h2 id="wtf-is-a-neural-net">WTF is a neural net?</h2>
+
+<p>Our brains are full of billions and billions of neurons stacked together. They look a little something like this…</p>
+
+<p><img src="/assets/images/neural_networks_from_scratch/neuron.png" alt="A simple artificial neuron" /></p>
+
+<p>At their core, they’re just a cell that takes in some very basic electric signals, and decides wether to fire a signal to the next neuron or not based on the signals it receives. A single neuron on it’s own isn’t very useful, but when we start stacking lots of neurons together, and let each of them handle a tiny bit of information in the form of an electrical impulse, we get a brain, and it turns out brains are actually pretty good at complex stuff.</p>
+
+<p>In the 50s a bunch of researchers decided to take inspiration from the way the brain works and create an artificial neuron (this is what is in the diagram) that would take in a set of numbers, perform some kind of function (like adding them together for example) and then pass the result to the next neuron. We could even stack lots of neurons together to make a neural network just like the brain! This was a great idea, but in the 50’s, we didn’t have the computing power or the amount of data needed to make it work.</p>
+
+<p>Fast forward to today and neural nets are the new hotness of 2016/17 and sit at the heart of Netflix’s recommendation systems and Tesla’s autopilot.</p>
+
+<p><img src="/assets/images/neural_networks_from_scratch/neural_network.png" alt="Stacking Neurons together into a Neural Network" /></p>
+
+<h2 id="supervised-learning">Supervised learning</h2>
+
+<p>Neural networks are a supervised learning problem. This means they rely on supervision to learn, we have to actively train them by giving them a bunch of correctly labelled answers and letting it work out how we got to them.</p>
+
+<p>Imagine your job was to replicate a recipe for a cake. You likely wouldn’t know where to begin, but if you had a correct list of ingredients and the final cake to reference, you would just need to keep making cakes and tweaking your recipe until you were able to match the look and taste of your reference cake.</p>
+
+<h2 id="building-a-neural-network">Building a neural network</h2>
+
+<p>We’ll import our dependencies and fix our seed so that our random numbers are the same every time we run our code</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Neural networks have two stages that we need to code; forward propagation (which is just passing data through our network to make a prediction) and back propagation (which is the art of calculating how wrong our prediction was, and adjusting the weights to move us a little closer to a more correct prediction).</p>
+
+<p>We’ll start by creating a class for our neural net and initialising all our weights with a random starting point. We’ll save these in our instance for later use…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">NeuralNetwork</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_layer_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">,</span> <span class="n">hidden_layer_2_size</span><span class="p">,</span> <span class="n">output_layer_size</span><span class="p">):</span>
+        <span class="c1"># Initialise the weights for inbetween each layer
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">w1</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">input_layer_size</span><span class="p">,</span> <span class="n">hidden_layer_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">w2</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">hidden_layer_size</span><span class="p">,</span> <span class="n">hidden_layer_2_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">w3</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">randn</span><span class="p">(</span><span class="n">hidden_layer_2_size</span><span class="p">,</span> <span class="n">output_layer_size</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>We’ll add a few helper functions to our class to calculate the sigmoid of a given number, and the sigmoid derivative. These will come in handy later…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">__sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__sigmoid_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="c1"># Calculates the derivative of our sigmoid function
+</span>        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="forward-propagation">Forward Propagation</h2>
+
+<p>We’ll multiply the inputs by the weights for the first layer, and apply a sigmoid activation function. Once we have this, we’ll repeat the process and multiply our result by the weights for the second layer, and apply our activation function. We’ll rinse and repeat until we get to the end of our network.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">forward_propagation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="c1"># Z's are pre activation function, A's are post activation function
+</span>
+        <span class="c1"># Feed inputs to first hidden layer
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">z2</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">w1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">a2</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">__sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">z2</span><span class="p">)</span>
+
+        <span class="c1"># Feed first hidden layer to second hidden layer
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">z3</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">a2</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">w2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">a3</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">__sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">z3</span><span class="p">)</span>
+
+        <span class="c1"># Feed second hidden layer to output to generate prediction
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">z4</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">a3</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">w3</span><span class="p">)</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">__sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">z4</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">prediction</span>
+</code></pre></div></div>
+
+<h2 id="cost-function">Cost Function</h2>
+
+<p>Once we have our prediction, we now need to work out how bad we were. We can use a cost function to quantify exactly how bad our prediction was.</p>
+
+<p>One method of doing this is to take all the errors, square them, and get the average. This is called the Mean Squared Error (MSE). The goal of training our neural net then becomes to try to minimise this cost. The lower our error (given to us by the cost function), the better our predictions will be.</p>
+
+<p>Let’s add a helper function to our class to calculate our cost…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">__compute_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">actual</span><span class="p">):</span>
+        <span class="c1"># Compute the Mean Squared Error of our inputs
+</span>        <span class="c1"># This gives us an overall averaged cost of how wrong our prediction was
+</span>        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">actual</span> <span class="o">-</span> <span class="n">prediction</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="backpropagation">Backpropagation</h2>
+
+<p>The weights in our neural net are our variables we can tweak that allows our network to generate good predictions. We want to find the best set of weights that result in the closest predictions. We work backwards from our prediction, back to our inputs to tweak these weights. This backwards pass through our network is called backpropagation or backprop.</p>
+
+<p>Wait. Why can’t we just check all of the possible weights? Well for a start all the weights need to work together, and as we add more, the difficulty grows exponentially. Imagine cracking a 4 digit pin number, there are 10^4 possibilities, that’s 10,000 different pin numbers. If we just add one more digit to our pin number, the possibilities jump to 100,000. That means our total combinations just shot up by 90,000! A six digit pin has 1,000,000 combinations! Going from 5 to 6 digits results in an extra 900,000 combinations! As we add more weights, our complexity and difficulty in brute forcing this grows exponentially.</p>
+
+<p>So how can we adjust our weights to reduce our cost function? What if we knew which direction to tweak our weights would result in reducing the cost function?  Well we could test the cost function of each side of our prediction to see which side is smaller, but that would be time intensive.</p>
+
+<p>Maths to the rescue! We can use the partial derivative which says “What is the rate of change of our cost function (J) with respect to W?”</p>
+
+<p>Calculating the partial derivative will give us a positive value for our cost increasing, and a negative value for it decreasing.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">backpropagation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">predictions</span><span class="p">):</span>
+        <span class="n">delta4</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">multiply</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">labels</span> <span class="o">-</span> <span class="n">predictions</span><span class="p">),</span> <span class="bp">self</span><span class="p">.</span><span class="n">__sigmoid_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">z4</span><span class="p">))</span>
+        <span class="n">dJdW3</span>  <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">a3</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">delta4</span><span class="p">)</span>
+
+        <span class="n">delta3</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">delta4</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">w3</span><span class="p">.</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">__sigmoid_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">z3</span><span class="p">)</span>
+        <span class="n">dJdW2</span>  <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">a2</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">delta3</span><span class="p">)</span>
+
+        <span class="n">delta2</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">delta3</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">w2</span><span class="p">.</span><span class="n">T</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="p">.</span><span class="n">__sigmoid_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">z2</span><span class="p">)</span>
+        <span class="n">dJdW1</span>  <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inputs</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">delta2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dJdW1</span><span class="p">,</span> <span class="n">dJdW2</span><span class="p">,</span> <span class="n">dJdW3</span>
+</code></pre></div></div>
+
+<p>We’ll iteratively take tiny steps downhill by calculating our cost, seeing which way to move, and shaving a tiny preset number which is called our learning rate, off our weights, and then running the cost function again, using our derivative to see which way to move, and taking another tiny step. The learning rate can be thought of as the size of the step we’re taking. Take too bigger step and we might miss the lowest error and bounce back up. Take too smaller step and our network will take forever to train.</p>
+
+<p><img src="/assets/images/neural_networks_from_scratch/gradient_descent.png" alt="Gradient Descent" /></p>
+
+<p>We’ll iterate with tiny steps until our error stops reducing and lands in lowest point of error, or local minima.
+This process is called gradient descent and it is everywhere in machine learning.</p>
+
+<h2 id="training">Training</h2>
+
+<p>Once we have our gradients, we’ll need to update our network to take a small step towards reducing our cost. We’ll do this multiple times by exposing our dataset to our neural network for 5000 iterations, called epochs in machine learning.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">learning_rate</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+
+            <span class="c1"># Step 1. Forward prop to get our predictions...
+</span>            <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">forward_propagation</span><span class="p">(</span><span class="n">input_data</span><span class="p">)</span>
+
+            <span class="c1"># Step 2. We'll print the cost to see how well we did
+</span>            <span class="k">print</span><span class="p">(</span><span class="s">"Current cost:"</span><span class="p">,</span> <span class="bp">self</span><span class="p">.</span><span class="n">__compute_cost</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span>
+
+            <span class="c1"># Step 3. Backprop to get our gradients (with which we'll update our weights)
+</span>            <span class="n">dJdW1</span><span class="p">,</span> <span class="n">dJdW2</span><span class="p">,</span> <span class="n">dJdW3</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">backpropagation</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">predictions</span><span class="p">)</span>
+
+            <span class="c1"># Step 4. Update our weights
+</span>            <span class="c1"># If we add our dJdW (our gradient), we'll increase our cost, and if we subtract it, we'll reduce it
+</span>            <span class="c1"># We'll set our weights to themselves, minus a tiny amount in the direction of our gradient
+</span>            <span class="c1"># (this is where we use a learning rate to take a tiny amount of the gradient)
+</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">w1</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">w1</span> <span class="o">-</span> <span class="p">(</span><span class="n">learning_rate</span> <span class="o">*</span> <span class="n">dJdW1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">w2</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">w2</span> <span class="o">-</span> <span class="p">(</span><span class="n">learning_rate</span> <span class="o">*</span> <span class="n">dJdW2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">w3</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">w3</span> <span class="o">-</span> <span class="p">(</span><span class="n">learning_rate</span> <span class="o">*</span> <span class="n">dJdW3</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="putting-it-all-together">Putting it all together</h2>
+
+<p>Let’s create a dataset and its corresponding correct labels</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">input_data</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]])</span>
+<span class="n">labels</span>     <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]]).</span><span class="n">T</span>
+</code></pre></div></div>
+
+<p>We’ll initialise a new neural net with 3 input nodes (our data is an array with 3 elements, so each one needs its own input node), 4 nodes in the first hidden layer, 5 in the second hidden layer, and 1 output…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">net</span> <span class="o">=</span> <span class="n">NeuralNetwork</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">net</span><span class="p">.</span><span class="n">train</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Running our code we can see how our cost decreases over time…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Cost at epoch 0: 0.688239103472
+Cost at epoch 1000: 0.0192991528354
+Cost at epoch 2000: 0.00398719767284
+Cost at epoch 3000: 0.00202819194556
+Cost at epoch 4000: 0.00132494673741
+</code></pre></div></div>
+
+<p>Let’s see how well our network learned to predict our test set. We can just run <code class="language-plaintext highlighter-rouge">net.forward_propagation(data)</code> to predict new data on our trained network…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span><span class="s">"Predictions...</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">net</span><span class="p">.</span><span class="n">forward_propagation</span><span class="p">(</span><span class="n">input_data</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s">"Actual...</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+<span class="p">[[</span> <span class="mf">0.02039406</span><span class="p">]</span>
+ <span class="p">[</span> <span class="mf">0.96795662</span><span class="p">]</span>
+ <span class="p">[</span> <span class="mf">0.97199464</span><span class="p">]</span>
+ <span class="p">[</span> <span class="mf">0.02758648</span><span class="p">]]</span>
+<span class="p">[[</span><span class="mi">0</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+</code></pre></div></div>
+
+<p>Not bad!</p>
+
+
+  </div>
+</div>
+
+      <p class="has-text-grey has-text-centered my-5 is-size-7">Made with Prosecco, a Jekyll theme I made while drinking Prosecco.</p>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.5.3/modernizr.min.js" type="text/javascript"></script>
+  </body>
+</html>
+
+
+
+
+

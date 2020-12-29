@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Spencer Dixon</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/vnd.microsoft.icon">
+  <link rel="stylesheet" href="/assets/css/style.css" type="text/css">
+  <link rel="stylesheet" href="/assets/css/markdown_styles.css" type="text/css">
+  <link rel="stylesheet" href="/assets/css/syntax.css" type="text/css">
+</head>
+
+  <body>
+    <div class="container is-max-desktop">
+            <div class="is-flex is-flex-direction-column mt-6 mb-5 is-align-items-center is-justify-content-center">
+        <figure class="image is-128x128 mb-2">
+          <img class="is-rounded" src="/assets/images/me2.jpg">
+        </figure>
+
+        
+        <h1 class="title">Spencer Dixon</h1>
+        <p class="subtitle is-4">Contract Ruby Developer</p>
+      </div>
+
+      <nav class="is-flex is-align-items-center is-justify-content-center is-flex-wrap-wrap mb-6">
+    
+    
+    <a class="button is-rounded m-1" href="/">Home</a>
+    
+    
+    
+    <a class="button is-rounded m-1" href="/archive">Archive</a>
+    
+    
+    
+    <a class="button is-rounded m-1" href="https://github.com/spencerldixon">Github</a>
+    
+    
+  </nav>
+
+      <div class="mb-6 has-text-centered">
+  <h1 class="title is-size-1">Deep Q-Learning for Atari Games</h1>
+  <h2 class="subtitle mt-1">01 Jan 2019</h2>
+</div>
+
+<div class="card">
+  <div class="card-content">
+    <p><img src="https://upload.wikimedia.org/wikipedia/en/thumb/f/f8/Etvideogamecover.jpg/220px-Etvideogamecover.jpg" alt="The worst game ever made" /></p>
+
+<p>Over the last few posts we introduced the topic of Q-Learning and Deep Q-Learning in the field of reinforcement learning. We looked at how we can use the Bellman Equation to calculate the quality of taking a particular action at a given state. We originally used a Q-table to keep track of our state action pairs and eventually replaced it with  a neural network to handle a larger state space by approximating our Q-values, rather than storing them for every possible state action pair.</p>
+
+<p>We’ll improve on our last tutorial of building a deep Q-network for the CartPole game, by throwing in a preprocessing step that allows us to learn from image data, rather than just the handy values we get back from OpenAI’s gym library. We’ve covered convolutional neural nets before, but if you’re not familiar, I would recommend brushing up on them first, as well as the past two posts on Q-Learning and Deep Q-Learning.</p>
+
+<p>In this post, we’ll combine deep Q-learning with convolutional neural nets, to build an agent that learns to play Space Invaders. In fact, our agent can learn to play a wide variety of Atari games, so feel free to swap out Space Invaders for any game listed here: <a href="https://gym.openai.com/envs/#atari">https://gym.openai.com/envs/#atari</a></p>
+
+<h2 id="lets-recap">Let’s recap</h2>
+
+<p>The bellman equation let’s us assess the q-value (quality) of a given state action pair. It states that the quality of taking an action at a given state, is equal to the immediate reward, plus the maximum discounted reward of the next state.</p>
+
+<h3 id="qs-a--r--γ-maxₐqs-a">Q(s, a) = r + γ maxₐ’(Q(s’, a’))</h3>
+
+<p>In other words, we’ll use a neural network to predict what action gives us the biggest future reward at any given state, by not only looking at the immediate state, but also, our prediction for the one that comes after it.</p>
+
+<p>Initially, we know nothing about our game environment, so we need to explore it by making random moves and observing the outcome. After a while, we’ll start slowly moving away from this exploration approach and into an approach of exploiting our predictions, in order to improve them and win the game.</p>
+
+<p>If we exploit too early, we won’t get chance to try new novel ideas which could improve our performance. If we explore too much, we won’t make progress. This is known as the exploration vs exploitation tradeoff.</p>
+
+<h2 id="experience-replay">Experience Replay</h2>
+
+<p>In our last post we introduced the concept of experience replay. Experience replay helps our network to learn from past actions. At each step, we’ll take our observation and append it to the end of a list (which we’ll call our ‘memory’). We implement the list as a deque in python, a double ended queue of fixed size that automatically removes the oldest element every time we add something new to the list. We’ll then feed this minibatch into our network to train our predictions of Q values. As our network improves, so do our experiences, which feeds back into our network.</p>
+
+<p>Last time we used a relatively short memory, but this time, we’re going to store the last one million frames of gameplay.</p>
+
+<h2 id="convnet">Convnet</h2>
+
+<p>We’ll swap out our standard neural network for a convolutional neural network and learn to make decisions based on nothing but the raw pixel data of our game. This means that our agent will have to learn what is an enemy, what is a ball, what shooting does, and all other possible actions and consequences. The advantage of this is that we’re no longer tied to a game. Our agent will be able to learn a wide variety of Atari games based purely on pixel input.</p>
+
+<p>Our convnet architecture if pretty standard, we’ll have three convolutional layers, a flatten layer, and two fully connected layers. The only difference is the we’ll omit the max pooling layers.</p>
+
+<p>Max Pooling aims to make our network insensitive to small changes in the positions of features within our image. As our agent needs to know exactly where things are in our game, we’ll get rid of the traditional max pooling layers in our convnet all together.</p>
+
+<h2 id="stacked-frames">Stacked Frames</h2>
+
+<p>When we feed our frames into our convnet, we’ll actually use a stack of 4 frames. If you think about a single frame of a game of Pong, it’s impossible to know the direction the ball is going in or how fast. Using a stack of four frames gives us a sense of motion and speed that is necessary for our network to have the full picture. You can think of it like a mini video clip being fed to our network. Instead of our input being a single frame of the shape (105,80,1), we’ll now have four channels, taking the shape to (105,80,4).</p>
+
+<h2 id="frame-skipping">Frame Skipping</h2>
+
+<p>In their original paper, DeepMind skipped four frames every time they looped through gameplay. Their reasoning for doing this was that the environment doesn’t change much between single frames, we’d get a better representation of speed and movement by only looking at every fourth frame, plus we would reduce the amount of frame we need to process.</p>
+
+<p>We’ll use frame skipping in our implementation, but how do we implement it? Fortunately this has been taken care of in OpenAI’s gym library.</p>
+
+<hr />
+
+<blockquote>
+  <p><em>Maximize your score in the Atari 2600 game MsPacman. In this environment, the observation is an RGB image of the screen, which is an array of shape (210, 160, 3) Each action is repeatedly performed for a duration of kkk frames, where kkk is uniformly sampled from {2,3,4}{2, 3, 4}{2,3,4}.</em></p>
+</blockquote>
+
+<hr />
+
+<p>The version number at the end of most games (<code class="language-plaintext highlighter-rouge">gym.make('MsPacman-v4')</code>) isn’t a version number at all, but refers to the amount of frames we skip. We can skip anywhere from no frames, to four frames by amending the number at the end of our environment name. For example…</p>
+
+<ul>
+  <li>MsPacman-v0 = No frame skipping</li>
+  <li>MsPacman-v2 = Look at every second frame</li>
+  <li>MsPacman-v3 = Look at every third frame</li>
+  <li>MsPacman-v4 = Look at every fourth frame</li>
+</ul>
+
+<h2 id="performance">Performance</h2>
+
+<p>Storing a million frames of pixels in memory can be quite computationally expensive. Our arrays for a single frame are 105 by 80 pixels, that’s 8400 pixels per frame. The numpy default array stores each of these pixels as a 32 bit float, meaning that our total memory (8400 * 32bits * 1000000) could take up to 33.6 gigabytes of RAM!</p>
+
+<p>To combat this, we’ll specify our datatypes as uint8 for our frames and convert them to floats at the last minute before we feed them into our network. This will bring our RAM usage down from 33.6 to 8.4 gigabytes, much better!</p>
+
+<h2 id="building-our-dqn">Building our DQN</h2>
+
+<p>Let’s start by importing our dependencies…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Flatten</span>
+<span class="kn">from</span> <span class="nn">keras.layers.convolutional</span> <span class="kn">import</span> <span class="n">Conv2D</span>
+<span class="kn">from</span> <span class="nn">keras.optimizers</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span> <span class="nn">keras.callbacks</span> <span class="kn">import</span> <span class="n">ModelCheckpoint</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">import</span> <span class="nn">gym</span>
+<span class="kn">import</span> <span class="nn">random</span>
+</code></pre></div></div>
+
+<p>Next we’ll define our DQNetwork class. I’ll keep indentation consistent, but I’ll break up some of the code so that we can walk through it block by block and really understand what’s happening.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">DQNetwork</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">env</span>              <span class="o">=</span> <span class="n">env</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">state_size</span>       <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">observation_space</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">action_size</span>      <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">action_space</span><span class="p">.</span><span class="n">n</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">memory</span>           <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="mi">1000000</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">stack</span>            <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">105</span><span class="p">,</span><span class="mi">80</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)],</span> <span class="n">maxlen</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">gamma</span>            <span class="o">=</span> <span class="mf">0.9</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">epsilon</span>          <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">epsilon_min</span>      <span class="o">=</span> <span class="mf">0.01</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">epsilon_decay</span>    <span class="o">=</span> <span class="mf">0.00003</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">learning_rate</span>    <span class="o">=</span> <span class="mf">0.00025</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span>       <span class="o">=</span> <span class="mi">64</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">frame_size</span>       <span class="o">=</span> <span class="p">(</span><span class="mi">105</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">possible_actions</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">identity</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">action_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">).</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">model</span>            <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">build_model</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Our <code class="language-plaintext highlighter-rouge">__init__</code> method is mostly the same as our last model. We’re setting up some key parameters to use later, like our gamma, epsilon (exploration vs exploitation trade off), our deque for our memory, and building and storing our model.</p>
+
+<p>The new things are…</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">stack</code> - A smaller deque to help stack our four frames together to show our network a sense of motion</li>
+  <li><code class="language-plaintext highlighter-rouge">possible_actions</code> - One hot encoded list of our possible actions (will come in handy later)</li>
+  <li><code class="language-plaintext highlighter-rouge">frame_size</code> - The size of our preprocessed frames. It makes sense to abstract this out as we’ll be typing this a lot</li>
+</ul>
+
+<p>Next we’ll need to think about preprocessing our frames before feeding them into our network. We’ll greyscale them as colour doesn’t add any additional information to our network and would take up three times the space (red, green and blue channels as opposed to a single greyscale channel). Notice we’re storing our frames as uint8 and not normalizing our frames to be between 0-1 (which we would traditionally do to prepare our data for our network). Instead, we’ll normalize on demand later on to save memory.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">preprocess_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">):</span>
+        <span class="s">"""Resize frame and greyscale, store as uint8 and normalize on demand to save memory"""</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">frame</span><span class="p">[::</span><span class="mi">2</span><span class="p">,</span> <span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">mean</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">).</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>We’ll also need a method to append a frame to the end of our four frame stack deque that we defined earlier. Our deque will handle removing the oldest frame, but there is an exception that we need to handle. At the beginning of our game, we’ll need to stack the same frame four times to fill out our stack. We’ll have our method take an optional <code class="language-plaintext highlighter-rouge">reset=True</code> parameter that clears the stack and adds the same frame four times. Our final stacked state that we pass into our network will end up being of the shape (105,80,4).</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">append_to_stack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="s">"""Preprocesses a frame and adds it to the stack"""</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">preprocess_frame</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">reset</span><span class="p">:</span>
+            <span class="c1"># Reset stack
+</span>            <span class="bp">self</span><span class="p">.</span><span class="n">stack</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">105</span><span class="p">,</span><span class="mi">80</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)],</span> <span class="n">maxlen</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+            <span class="c1"># Because we're in a new episode, copy the same frame 4x
+</span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">):</span>
+                <span class="bp">self</span><span class="p">.</span><span class="n">stack</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">.</span><span class="n">stack</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+
+        <span class="c1"># Build the stacked state (first dimension specifies different frames)
+</span>        <span class="n">stacked_state</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">stack</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stacked_state</span>
+</code></pre></div></div>
+
+<p>We’ll need to create a similar method to store our experiences in memory, and retrieve a random minibatch…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">remember</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">done</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">memory</span><span class="p">.</span><span class="n">append</span><span class="p">((</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">done</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">memory_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="s">"""Sample a random batch of experiences from memory"""</span>
+        <span class="n">memory_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">memory</span><span class="p">)</span>
+        <span class="n">index</span>       <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">choice</span><span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="n">arange</span><span class="p">(</span><span class="n">memory_size</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="p">.</span><span class="n">memory</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">index</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p>Next, we’ll build our model. This is almost identical as last time, except that we’re using the Conv2D layer from Keras, and exclusing the traditional max pooling layer that we’d normally add with a convolutional network. (Remember, max pooling makes our network insensitive to position changes. Great for object detection and classification, but not great when our game depends on the position of the features we detect!)</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""Build the neural net model"""</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s">'elu'</span><span class="p">,</span> <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">105</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">4</span><span class="p">)))</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s">'elu'</span><span class="p">))</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Conv2D</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">activation</span><span class="o">=</span><span class="s">'elu'</span><span class="p">))</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Flatten</span><span class="p">())</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'elu'</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s">'glorot_uniform'</span><span class="p">))</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">action_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'softmax'</span><span class="p">))</span>
+        <span class="n">model</span><span class="p">.</span><span class="nb">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s">'mse'</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">Adam</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">learning_rate</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">model</span>
+</code></pre></div></div>
+
+<p>Our agent will need to be able to make two types of move, depending on where we are in our exploration vs exploitation journey. We’ll write a method that returns a random action, and a method which takes in our state (105,80,4), and predicts the best action (according to our neural network).</p>
+
+<p>Notice in the <code class="language-plaintext highlighter-rouge">predict_action</code> method, we first divide by 255 to normalize our values between 0 and 1. Secondly, we’ll reshape our state from (105,80,4), to (1,105,80,4), a necessary step for keras to consume our data. You can think of our shape like this: (number of examples, height, width, depth). Our network will return a vector the size of our possible actions, from which, we’ll return the index of the action we predicted, ready to feed into our <code class="language-plaintext highlighter-rouge">env.step</code> call.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">random_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">"""Returns a random action"""</span>
+        <span class="k">return</span> <span class="n">random</span><span class="p">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">possible_actions</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">predict_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="s">"""Returns index of best predicted action"""</span>
+        <span class="n">state</span>  <span class="o">=</span> <span class="n">state</span> <span class="o">/</span> <span class="mi">255</span>
+        <span class="n">state</span>  <span class="o">=</span> <span class="n">state</span><span class="p">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">state</span><span class="p">.</span><span class="n">shape</span><span class="p">))</span> <span class="c1"># Reshape our state to a single example for our neural net
+</span>        <span class="n">choice</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">predict</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">choice</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>With our <code class="language-plaintext highlighter-rouge">random_action</code> and <code class="language-plaintext highlighter-rouge">predict_action</code> methods defined, we can now write a function to select which one to choose depending on where we are on our explore vs exploit spectrum.</p>
+
+<p>We’ll also use a slightly different way of calculating our explore vs exploit probability depending on the step in our game play. Lastly, we’ll return our <code class="language-plaintext highlighter-rouge">explore_probability</code> to log out later.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">select_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">decay_step</span><span class="p">):</span>
+        <span class="s">"""Returns an action to take with decaying exploration/exploitation"""</span>
+
+        <span class="n">explore_probability</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">epsilon_min</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">epsilon</span> <span class="o">-</span> <span class="bp">self</span><span class="p">.</span><span class="n">epsilon_min</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="p">.</span><span class="n">epsilon_decay</span> <span class="o">*</span> <span class="n">decay_step</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">explore_probability</span> <span class="o">&gt;</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">rand</span><span class="p">():</span>
+            <span class="c1"># Exploration
+</span>            <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">random_action</span><span class="p">(),</span> <span class="n">explore_probability</span>
+        <span class="k">else</span><span class="p">:</span>
+             <span class="c1"># Exploitation
+</span>            <span class="k">return</span> <span class="bp">self</span><span class="p">.</span><span class="n">predict_action</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="n">explore_probability</span>
+</code></pre></div></div>
+
+<h2 id="training">Training</h2>
+
+<p>With the majority of our agent built, there’s only one more method to implement; training our model with experiences from our replay memory.</p>
+
+<p>Firstly, we’ll check to see if our memory is less than our batch size of 64. If we don’t have enough experiences logged yet, we’ll exit the function and let our agent keep gathering random experiences until we have enough experience to form a complete minibatch to train on.</p>
+
+<p>Next we prepare our minibatch. First we’ll select a random minibatch of 64 experiences, notice we also divide our <code class="language-plaintext highlighter-rouge">states_mb</code> and <code class="language-plaintext highlighter-rouge">next_states_mb</code> by 255 to normalise our frames to be between 0 and 1. Next, we’ll grab our predictions for our current state (shape (64, 105, 80, 4)), as well as the predictions for our next states.</p>
+
+<p>With our predictions, we can assemble a corresponding list of the Q-values for each state. If we’ve reached a terminal state, and the game is over, then our Q-value is equal to the final reward (as there are no more future rewards). If we’ve not yet reached the end of our game, then our Q-value is set to the immediate reward (from the <code class="language-plaintext highlighter-rouge">rewards_mb[i]</code> list, plus the maximum discounted future reward (gamma * the maximum reward from our next state prediction).</p>
+
+<p>Once we’ve finished our corresponding Q-values list, we can fit our model for one epoch, with our <code class="language-plaintext highlighter-rouge">states_mb</code> as our input, and our <code class="language-plaintext highlighter-rouge">targets_mb</code> as our labels. A single iteration doesn’t seem much here, but remember we’ll be calling this replay method at every step throughout our gameplay.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">def</span> <span class="nf">replay</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">memory</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Select a random minibatch from memory
+</span>        <span class="n">minibatch</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">memory_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">batch_size</span><span class="p">)</span>
+
+        <span class="c1"># Split out our tuple and normalise our states
+</span>        <span class="n">states_mb</span>      <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">each</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">minibatch</span><span class="p">])</span> <span class="o">/</span> <span class="mi">255</span>
+        <span class="n">actions_mb</span>     <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">each</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">minibatch</span><span class="p">])</span>
+        <span class="n">rewards_mb</span>     <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">each</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">minibatch</span><span class="p">])</span>
+        <span class="n">next_states_mb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">each</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">minibatch</span><span class="p">])</span> <span class="o">/</span> <span class="mi">255</span>
+        <span class="n">dones_mb</span>       <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">each</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">minibatch</span><span class="p">])</span>
+
+        <span class="c1"># Get our predictions for our states and our next states
+</span>        <span class="n">target_qs</span>         <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">predict</span><span class="p">(</span><span class="n">states_mb</span><span class="p">)</span>
+        <span class="n">predicted_next_qs</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">predict</span><span class="p">(</span><span class="n">next_states_mb</span><span class="p">)</span>
+
+        <span class="c1"># Create an empty targets list to hold our Q-values
+</span>        <span class="n">target_Qs_batch</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">minibatch</span><span class="p">)):</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="n">dones_mb</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                <span class="c1"># If we finished the game, our q value is the final reward (as there are no more future rewards)
+</span>                <span class="n">q_value</span> <span class="o">=</span> <span class="n">rewards_mb</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># If we havent, our q value is the immediate reward, plus future discounted reward (gamma is our discount)
+</span>                <span class="n">q_value</span> <span class="o">=</span> <span class="n">rewards_mb</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nb">max</span><span class="p">(</span><span class="n">predicted_next_qs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+            <span class="c1"># Fit target to a vector for keras (represent actions as one hot * q value (q gets set at the action we took, everything else is 0))
+</span>
+            <span class="n">one_hot_target</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">possible_actions</span><span class="p">[</span><span class="n">actions_mb</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+            <span class="n">target</span>         <span class="o">=</span> <span class="n">one_hot_target</span> <span class="o">*</span> <span class="n">q_value</span>
+            <span class="n">target_Qs_batch</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+
+        <span class="n">targets_mb</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">array</span><span class="p">([</span><span class="n">each</span> <span class="k">for</span> <span class="n">each</span> <span class="ow">in</span> <span class="n">target_Qs_batch</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">fit</span><span class="p">(</span><span class="n">states_mb</span><span class="p">,</span> <span class="n">targets_mb</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1"># Change to verbose=0 to disable logging
+</span></code></pre></div></div>
+
+<h2 id="training-our-dqn">Training our DQN</h2>
+
+<p>With our DQNetwork class complete, we just need to train our model. As we’ve dramatically increased our state space, our model is going to take quite a long time to train. We’re training for around 2.5 million frames of game play (50 episodes, each with a maximum of 50,000 steps per game), a conventional laptop isn’t going to cut it here (unless you’ve got a lot of RAM and are happy to leave it running for a week or two!).</p>
+
+<p>I’ve included a section about my recommendations for training on an AWS instance below. But first, let’s talk about what’s happening in our training loop.</p>
+
+<p>We’ll start by initialising our environment, as well as a monitor wrapper which will record each episode to video for us to review later. We’ll loop through our episodes, taking a maximum of 50000 steps per game.</p>
+
+<p>At each step, we’ll pick an action based on exploration/exploitation and observe the reward and new state. We’ll append these to our memory, as we’ll need them to train on later.</p>
+
+<p>If it turns out we’ve finished our game and are at the terminal state, we’ll create a blank frame to represent our <code class="language-plaintext highlighter-rouge">next_state</code> add to our stack. This let’s us record the final reward, if we didn’t stack a blank frame, we’d lose all the information and rewards we were awarded at the final state.</p>
+
+<p>If we’re still playing our game, we’ll add our frame to the end of our four frame stack, set the <code class="language-plaintext highlighter-rouge">state</code> equal to the <code class="language-plaintext highlighter-rouge">next_state</code> to move the game on, and train our agent on a random minibatch of 64 previous experiences.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">env</span>         <span class="o">=</span> <span class="n">gym</span><span class="p">.</span><span class="n">make</span><span class="p">(</span><span class="s">'Pong-v4'</span><span class="p">)</span>
+<span class="n">env</span>         <span class="o">=</span> <span class="n">gym</span><span class="p">.</span><span class="n">wrappers</span><span class="p">.</span><span class="n">Monitor</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s">'./videos/'</span><span class="p">,</span> <span class="n">video_callable</span><span class="o">=</span><span class="k">lambda</span> <span class="n">episode_id</span><span class="p">:</span> <span class="bp">True</span><span class="p">)</span> <span class="c1"># Save each episode to video
+</span><span class="n">agent</span>       <span class="o">=</span> <span class="n">DQNetwork</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+<span class="n">episodes</span>    <span class="o">=</span> <span class="mi">50</span>
+<span class="n">steps</span>       <span class="o">=</span> <span class="mi">50000</span>
+<span class="n">decay_step</span>  <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">episodes</span><span class="p">):</span>
+    <span class="n">episode_rewards</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># 1. Reset the env and frame stack
+</span>    <span class="n">state</span>         <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">env</span><span class="p">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">state</span>         <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">append_to_stack</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+        <span class="n">decay_step</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># 2. Select an action to take based on exploration/exploitation
+</span>        <span class="n">action</span><span class="p">,</span> <span class="n">explore_probability</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">decay_step</span><span class="p">)</span>
+
+        <span class="c1"># 3. Take the action and observe the new state
+</span>        <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">env</span><span class="p">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+
+        <span class="c1"># Store the reward for this move in the episode
+</span>        <span class="n">episode_rewards</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+
+        <span class="c1"># 4. If game finished...
+</span>        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="c1"># Create a blank next state so that we can save the final rewards
+</span>            <span class="n">next_state</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">210</span><span class="p">,</span><span class="mi">160</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="p">.</span><span class="n">uint8</span><span class="p">)</span>
+            <span class="n">next_state</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">append_to_stack</span><span class="p">(</span><span class="n">next_state</span><span class="p">)</span>
+
+            <span class="c1"># Add our experience to memory
+</span>            <span class="n">agent</span><span class="p">.</span><span class="n">remember</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">)</span>
+
+            <span class="c1"># Save our model
+</span>            <span class="n">agent</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">save_weights</span><span class="p">(</span><span class="s">"model-ep-{}.h5"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">episode</span><span class="p">))</span>
+
+            <span class="c1"># Print logging info
+</span>            <span class="k">print</span><span class="p">(</span><span class="s">"Game ended at episode {}/{}, total rewards: {}, explore_prob: {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">episode</span><span class="p">,</span> <span class="n">episodes</span><span class="p">,</span> <span class="n">np</span><span class="p">.</span><span class="nb">sum</span><span class="p">(</span><span class="n">episode_rewards</span><span class="p">),</span> <span class="n">explore_probability</span><span class="p">))</span>
+            <span class="c1"># Start a new episode
+</span>            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Add the next state to the stack
+</span>            <span class="n">next_state</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">append_to_stack</span><span class="p">(</span><span class="n">next_state</span><span class="p">)</span>
+
+            <span class="c1"># Add our experience to memory
+</span>            <span class="n">agent</span><span class="p">.</span><span class="n">remember</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">)</span>
+
+            <span class="c1"># Set state to the next state
+</span>            <span class="n">state</span> <span class="o">=</span> <span class="n">next_state</span>
+
+        <span class="c1"># 5. Train with replay
+</span>        <span class="n">agent</span><span class="p">.</span><span class="n">replay</span><span class="p">()</span>
+</code></pre></div></div>
+
+<h2 id="training-on-ec2">Training on EC2</h2>
+
+<p>I opted to train my model using a p2.xlarge instance on EC2. I ran the code as a regular python file, within a tmux session. That way I could detatch from the session and it would keep running. If you were to try running this inside a Jupyter notebook, the code would stop running as soon as you closed your browser or laptop, given that this can take days or weeks to train, it’s best to have an environment you can completely detatch from and come back to later.</p>
+
+<p>You can follow this tutorial to get Jupyter Notebook up and running on an EC2 instance with GPU (follow up to the jupyter part to get your EC2 instance running):</p>
+
+<p><a href="https://medium.com/@margaretmz/setting-up-aws-ec2-for-running-jupyter-notebook-on-gpu-c281231fad3f">https://medium.com/@margaretmz/setting-up-aws-ec2-for-running-jupyter-notebook-on-gpu-c281231fad3f</a></p>
+
+<p>Once you’ve set up your EC2 instance, you’ll need to ssh into your instance, install some dependencies and download the roms for the Atari games…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt install unrar
+sudo apt install ffmpeg
+</code></pre></div></div>
+
+<p>Download and import Atari roms…</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wget http://www.atarimania.com/roms/Roms.rar
+unrar x Roms.rar &amp;&amp; unzip Roms/ROMS.zip
+pip install gym gym-retro gym[atari]
+python -m retro.import ROMS/
+</code></pre></div></div>
+
+<h2 id="results">Results</h2>
+
+<p>Here’s Playing at episode 1. Some times we’ll hit the ball accidentally, but we’re still in the explore phase, so a lot of our movement is random and jittery.</p>
+
+<p><img src="/assets/images/deep_q_learning_for_atari_games/pong_ep_1.gif" alt="Pong at episode one" /></p>
+
+<p>Updates coming over the next few days as training completes!</p>
+
+<h2 id="resources">Resources</h2>
+
+<p>Here are a couple of articles that really helped me with wrapping my head around the implementation of this…</p>
+
+<p><a href="https://ai.intel.com/demystifying-deep-reinforcement-learning/#gs.AfY3CNJe">https://ai.intel.com/demystifying-deep-reinforcement-learning/#gs.AfY3CNJe</a></p>
+
+<p><a href="https://becominghuman.ai/lets-build-an-atari-ai-part-1-dqn-df57e8ff3b26">https://becominghuman.ai/lets-build-an-atari-ai-part-1-dqn-df57e8ff3b26</a></p>
+
+<p><a href="https://medium.com/@margaretmz/setting-up-aws-ec2-for-running-jupyter-notebook-on-gpu-c281231fad3f">https://medium.com/@margaretmz/setting-up-aws-ec2-for-running-jupyter-notebook-on-gpu-c281231fad3f</a></p>
+
+  </div>
+</div>
+
+      <p class="has-text-grey has-text-centered my-5 is-size-7">Made with Prosecco, a Jekyll theme I made while drinking Prosecco.</p>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.5.3/modernizr.min.js" type="text/javascript"></script>
+  </body>
+</html>
+
+
+
+
+

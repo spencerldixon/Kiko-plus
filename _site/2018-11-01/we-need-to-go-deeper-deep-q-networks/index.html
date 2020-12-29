@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Spencer Dixon</title>
+  <link rel="shortcut icon" href="favicon.ico" type="image/vnd.microsoft.icon">
+  <link rel="stylesheet" href="/assets/css/style.css" type="text/css">
+  <link rel="stylesheet" href="/assets/css/markdown_styles.css" type="text/css">
+  <link rel="stylesheet" href="/assets/css/syntax.css" type="text/css">
+</head>
+
+  <body>
+    <div class="container is-max-desktop">
+            <div class="is-flex is-flex-direction-column mt-6 mb-5 is-align-items-center is-justify-content-center">
+        <figure class="image is-128x128 mb-2">
+          <img class="is-rounded" src="/assets/images/me2.jpg">
+        </figure>
+
+        
+        <h1 class="title">Spencer Dixon</h1>
+        <p class="subtitle is-4">Contract Ruby Developer</p>
+      </div>
+
+      <nav class="is-flex is-align-items-center is-justify-content-center is-flex-wrap-wrap mb-6">
+    
+    
+    <a class="button is-rounded m-1" href="/">Home</a>
+    
+    
+    
+    <a class="button is-rounded m-1" href="/archive">Archive</a>
+    
+    
+    
+    <a class="button is-rounded m-1" href="https://github.com/spencerldixon">Github</a>
+    
+    
+  </nav>
+
+      <div class="mb-6 has-text-centered">
+  <h1 class="title is-size-1">We need to go deeper: Deep Q Networks</h1>
+  <h2 class="subtitle mt-1">01 Nov 2018</h2>
+</div>
+
+<div class="card">
+  <div class="card-content">
+    <p>In the last post we looked at Q-Learning with respect to reinforcement learning; the idea that we can assess the quality of a particular state action pair and build up a cheat sheet that allows us to play the game proficiently.</p>
+
+<p>Unfortunately we quickly came to the bottleneck in this problem; that as our state space grows, it becomes more and more computationally expensive to calculate the quality for every possible state action pair (that coupled with the fact that this only works on an environment that can be modelled with a Markov Decision Process). Instead of creating a Q-table (check out the previous post if you’re not familiar with Q-tables), we need a way to approximate the quality of an action without storing every possible combination of state action pairs.</p>
+
+<p>Enter the good old neural network.</p>
+
+<p>A neural network works like a blank brain that you can train to associate some input with some output. Give it 10,000 images of cats and dogs, along with the correct answers, and it will map the input to the output and be able to classify cat or dog on a new image that it hasn’t seen before. The caveat here is that you need to provide the correct answers during training. This means neural networks are a <em>supervised</em> learning problem.</p>
+
+<p>Mathematically, we’re simply seeking to minimise the difference between the predictions from our neural net, and the actual correct answers. As long as there is a small error, our neural net will, on average, predict the same thing as the correct answer.</p>
+
+<p>Enter our game for this post and our loss function…</p>
+
+<h2 id="learning-to-play-cartpole">Learning to play CartPole</h2>
+
+<p>Cart Pole is a game which ships with OpenAI’s gym library for reinforcement learning. It consists of a pole, hinged on a movable cart. The objective is simple; move the cart left or right to keep the pole balanced and upright.</p>
+
+<p><img src="/assets/images/we_need_to_go_deeper/cartpole.gif" alt="Cartpole" /></p>
+
+<p>But there’s a problem. With reinforcement learning, we seek to maximise our cumulative rewards over time. If we received a reward for moving the cart to the right to retain balance of the pole, then we may try moving the cart right again to get another reward. This unwanted behaviour is rampant in reinforcement learning and demonstrates how a simple oversight can turn good AI bad.</p>
+
+<p>Instead of maximising reward, we want to maximise time. Our agent’s goal will be to keep the game going for as long as possible.</p>
+
+<h2 id="experience-replay">Experience Replay</h2>
+
+<p>Imagine we’re playing a game where our enemy pops out at either the right, or left of the screen. Each round is random, but suppose we get a large amount of rounds that favour one particular side. As our agent is trained sequentially, our neural net begins to favour that particular side and develops a bias in its prediction of future actions. In other words, we start to favour recent data and forget past experiences.</p>
+
+<p>How do we train our neural net in a way that it doesn’t favour what it’s recently learned? How do we prevent our neural net from forgetting past experiences that may be relevant in the future?</p>
+
+<p>The answer is surprisingly simple. We introduce the concept of experience replay, or memory. Every time we are exposed to a state action pair, we’ll store it away in an special python list type called a <code class="language-plaintext highlighter-rouge">deque</code> (it’s essentially a list of a fixed size, that removes the oldest element each time that you add a new one to it. That way we’ll have a constantly updating buffer of the last <code class="language-plaintext highlighter-rouge">n</code> number of state action pairs to train from).</p>
+
+<p>With our experience replay buffer built up, we can randomly sample minibatches of experiences to train from and benefit from a wider look at our environment. Additionally, as our neural net gets better, so do the state action pairs that we train our neural net from. It’s a win win.</p>
+
+<h2 id="building-the-cartpole-agent">Building the CartPole Agent</h2>
+
+<p>We’ll start by importing our dependencies. Most of it is the same as last time, but we’ll use Keras for our neural net, and matplotlib for plotting our score over time.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="n">np</span>
+<span class="kn">import</span> <span class="nn">gym</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Dense</span>
+<span class="kn">from</span> <span class="nn">keras.optimizers</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+</code></pre></div></div>
+
+<p>Next, we’ll build our agent. Note that this is all one class but I’ll try to break it up and talk about each method. Pay particular notice to the indentation here.</p>
+
+<p>Our agent will take in the environment and hold the hyperparameters. We’ll use the <code class="language-plaintext highlighter-rouge">env</code> argument to determine our state size and action size.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Agent</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">memory</span>        <span class="o">=</span> <span class="n">deque</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">state_size</span>    <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">observation_space</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">action_size</span>   <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">action_space</span><span class="p">.</span><span class="n">n</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">gamma</span>         <span class="o">=</span> <span class="mf">0.95</span>    <span class="c1"># discount rate
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">epsilon</span>       <span class="o">=</span> <span class="mf">1.0</span>     <span class="c1"># exploration rate
+</span>        <span class="bp">self</span><span class="p">.</span><span class="n">epsilon_min</span>   <span class="o">=</span> <span class="mf">0.01</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">epsilon_decay</span> <span class="o">=</span> <span class="mf">0.995</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.001</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">model</span>         <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">build_model</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Notice in the initialisation of our agent, we made a call to a <code class="language-plaintext highlighter-rouge">build_model()</code> method. Let’s write that now to return our neural net from Keras. We’ll store this in a hyperparam so that we can make calls to predict actions or train it later.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">state_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'relu'</span><span class="p">))</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'relu'</span><span class="p">))</span>
+        <span class="n">model</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">action_size</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s">'linear'</span><span class="p">))</span>
+        <span class="n">model</span><span class="p">.</span><span class="nb">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s">'mse'</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">Adam</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="bp">self</span><span class="p">.</span><span class="n">learning_rate</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">model</span>
+</code></pre></div></div>
+
+<p>Much like our previous tutorial, we’ll need a way to select an action based on our exploration / exploitation trade off. We’ll choose a random number between 1 and 0. If our number is greater than epsilon, we’ll use our neural net to predict which action we should take (exploitation), if it’s lower, we’ll select and action at random and continue to explore our environment.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">select_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="c1"># Selects an action based on a random number
+</span>        <span class="c1"># If the number is greater than epsilon, we'll take the predicted action for this state from our neural net
+</span>        <span class="c1"># If not, we'll choose a random action
+</span>        <span class="c1"># This helps us navigate the exploration/exploitation trade off
+</span>        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">random</span><span class="p">.</span><span class="n">rand</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">epsilon</span><span class="p">:</span>
+            <span class="c1"># Exploitation
+</span>            <span class="n">actions</span> <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">predict</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="p">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">actions</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Exploration
+</span>            <span class="k">return</span> <span class="n">random</span><span class="p">.</span><span class="n">randrange</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">action_size</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Next we’ll introduce the idea of experience replay. We’ll write a very simple function that takes the <code class="language-plaintext highlighter-rouge">state</code>, <code class="language-plaintext highlighter-rouge">action</code>, <code class="language-plaintext highlighter-rouge">reward</code>, <code class="language-plaintext highlighter-rouge">next_state</code>, <code class="language-plaintext highlighter-rouge">done</code> data returned from taking an action on our environment, and adds it to the end of our deque (removing the oldest element at the same time)…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">remember</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">.</span><span class="n">memory</span><span class="p">.</span><span class="n">append</span><span class="p">((</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>Lastly, we’ll need a function to train our neural net from our experience replay buffer. Firstly, we’ll make sure that we have enough experiences in our buffer to train from. If we don’t we’ll simply exit the function and keep exploring our environment until we do.</p>
+
+<p>When we have enough experiences to sample from, we’ll take a random sample of experiences which we’ll call our minibatch, and use that to train the network by calculating our predicted Q-values.</p>
+
+<p>Finally, we’ll reduce our epsilon to gradually nudge us more and more towards exploitation of our neural net in prediction our Q value, rather than exploring our environment by taking random actions.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">def</span> <span class="nf">train_with_replay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="c1"># If we dont have enough experiences to train, we'll exit this function
+</span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">memory</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">batch_size</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Sample a random minibatch of states
+</span>            <span class="n">minibatch</span> <span class="o">=</span> <span class="n">random</span><span class="p">.</span><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">memory</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+
+            <span class="c1"># For each var in the minibatch, train the network...
+</span>            <span class="k">for</span> <span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span> <span class="ow">in</span> <span class="n">minibatch</span><span class="p">:</span>
+                <span class="c1"># If we haven't finished the game, calculate our discounted, predicted q value...
+</span>                <span class="k">if</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+                    <span class="n">q_update_target</span> <span class="o">=</span> <span class="n">reward</span> <span class="o">+</span> <span class="bp">self</span><span class="p">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="n">amax</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">predict</span><span class="p">(</span><span class="n">next_state</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># If we have finished the game, our q-value is our final reward
+</span>                    <span class="n">q_update_target</span> <span class="o">=</span> <span class="n">reward</span>
+
+                <span class="c1"># Update the predicted q-value for action we tool
+</span>                <span class="n">q_values</span>            <span class="o">=</span> <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">predict</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+                <span class="n">q_values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">action</span><span class="p">]</span> <span class="o">=</span> <span class="n">q_update_target</span>
+
+                <span class="c1"># Train model on minibatches from memory
+</span>                <span class="bp">self</span><span class="p">.</span><span class="n">model</span><span class="p">.</span><span class="n">fit</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">q_values</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+                <span class="c1"># Reduce epsilon
+</span>                <span class="k">if</span> <span class="bp">self</span><span class="p">.</span><span class="n">epsilon</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="p">.</span><span class="n">epsilon_min</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="p">.</span><span class="n">epsilon</span> <span class="o">*=</span> <span class="bp">self</span><span class="p">.</span><span class="n">epsilon_decay</span>
+</code></pre></div></div>
+
+<h2 id="training-our-deep-q-network">Training our Deep Q-Network</h2>
+
+<p>With our agent written, we’ll piece everything together and start training our deep Q-network. We’ll start by defining our cart pole environment and setting our environment specific hyperparameters like number of episodes and minibatch size. We’ll also keep track of our scores in an array in order to graph them out at the end.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">env</span>        <span class="o">=</span> <span class="n">gym</span><span class="p">.</span><span class="n">make</span><span class="p">(</span><span class="s">'CartPole-v0'</span><span class="p">)</span>
+<span class="n">episodes</span>   <span class="o">=</span> <span class="mi">5000</span>
+<span class="n">max_steps</span>  <span class="o">=</span> <span class="mi">200</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="n">agent</span>      <span class="o">=</span> <span class="n">Agent</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+<span class="n">scores</span>     <span class="o">=</span> <span class="p">[]</span>
+</code></pre></div></div>
+
+<p>We’ll loop through our total number of episodes, and, in a smaller loop, step through our environment, taking actions and observing their rewards. We’ll add our observation to the experience replay buffer. At the end of our game, we’ll print our score, and train our agent on a random minibatch of experiences at the end of each episode.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">episodes</span><span class="p">):</span>
+    <span class="c1"># Reset the environment
+</span>    <span class="n">state</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+
+    <span class="n">score</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_steps</span><span class="p">):</span>
+        <span class="c1"># Render the env
+</span>        <span class="c1">#env.render()
+</span>
+        <span class="c1"># Select an action
+</span>        <span class="n">action</span> <span class="o">=</span> <span class="n">agent</span><span class="p">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+
+        <span class="c1"># Take the action and observe our new state
+</span>        <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="p">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="n">next_state</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">next_state</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
+
+        <span class="c1"># Add our tuple to memory
+</span>        <span class="n">agent</span><span class="p">.</span><span class="n">remember</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">done</span><span class="p">)</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">next_state</span>
+        <span class="n">score</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="n">scores</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">episode</span> <span class="o">%</span> <span class="mi">500</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># print the step as a score and break out of the loop
+</span>                <span class="c1"># The more steps we did, the better our bot is
+</span>                <span class="k">print</span><span class="p">(</span><span class="s">"episode: {}/{}, score: {}"</span><span class="p">.</span><span class="nb">format</span><span class="p">(</span><span class="n">episode</span><span class="p">,</span> <span class="n">episodes</span><span class="p">,</span> <span class="n">score</span><span class="p">))</span>
+            <span class="k">break</span>
+
+    <span class="n">agent</span><span class="p">.</span><span class="n">train_with_replay</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="graphing-our-scores">Graphing our scores</h2>
+
+<p>Finally, we can check how our agent performed over training by printing the score at each episode…</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">y</span> <span class="o">=</span> <span class="n">scores</span>
+<span class="n">x</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><img src="/assets/images/we_need_to_go_deeper/graph.png" alt="Plot of scores over training time" /></p>
+
+<h2 id="summary">Summary</h2>
+
+<p>We dealt with a larger state space by ditching our Q-table in favour of a neural network to approximate our Q-values of taking a particular action at a particular state. Our agent starts by exploring our space and very quickly learns to maximise its time playing the game. We navigated the problems in training our neural net by taking advantage of an experience replay buffer to stop our agent favouring recent experiences.</p>
+
+<p>Deep Q Networks can be useful for exploring larger state spaces, but they also come with their own trade offs; mainly that we’re still using a very handy API to explore our environment. In future posts we’ll look at how we can handle more generic game spaces by building agents that can adapt to a wide variety of games.</p>
+
+  </div>
+</div>
+
+      <p class="has-text-grey has-text-centered my-5 is-size-7">Made with Prosecco, a Jekyll theme I made while drinking Prosecco.</p>
+    </div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.5.3/modernizr.min.js" type="text/javascript"></script>
+  </body>
+</html>
+
+
+
+
+
