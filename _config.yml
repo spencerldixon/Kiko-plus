@@ -1,5 +1,6 @@
 # Basic
-theme: prosecco
+# theme: prosecco
+remote_theme: spencerldixon/jekyll-prosecco-theme
 title: "Spencer Dixon"
 tagline: "Contract Ruby Developer"
 profile_image: 'me2.jpg'
