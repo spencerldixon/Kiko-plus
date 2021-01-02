@@ -5,3 +5,4 @@ ruby '2.7.2'
 
 gem 'jekyll'
 gem "prosecco", github: "spencerldixon/jekyll-prosecco-theme"
+# gem "prosecco", path: "./../prosecco"

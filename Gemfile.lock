@@ -1,8 +1,8 @@
 GIT
   remote: https://github.com/spencerldixon/jekyll-prosecco-theme.git
-  revision: 1320f8ae245a893dc7d26ce98b7491f6eadcfbf0
+  revision: 306cbc8546aa874cf77e20f17c1df1de9497f553
   specs:
-    prosecco (0.1.1)
+    prosecco (0.1.2)
       jekyll (~> 4.2)
       jekyll-paginate
       jemoji
