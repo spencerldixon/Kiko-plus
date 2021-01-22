@@ -37,6 +37,10 @@ nav:
     url:            "/archive"
   - name:           "Github"
     url:            "https://github.com/spencerldixon"
+  - name:           "LinkedIn"
+    url:            "https://www.linkedin.com/in/spencerldixon"
+  - name:           "Twitter"
+    url:            "https://www.twitter.com/spencerldixon"
 
 # Sass
 sass:

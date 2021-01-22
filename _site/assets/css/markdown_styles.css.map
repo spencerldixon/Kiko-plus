@@ -1,0 +1,12 @@
+{
+	"version": 3,
+	"file": "markdown_styles.css",
+	"sources": [
+		"markdown_styles.scss"
+	],
+	"sourcesContent": [
+		"p {\n\tfont-size: 1.25rem;\n  margin: 1rem 0;\n}\n\nh1, h2, h3 { \n  color: #363636;\n  line-height: 1.125;\n  margin: 1.5rem 0;\n}\n\nh1 { \n  font-size: 3rem; \n  font-weight: 600;\n}\n\nh2 {\n  font-size: 2rem;\n  font-weight: 600;\n}\n\nh3 {\n  font-size: 1.5rem;\n}\n\nimg {\n  display: block;\n  margin: 1.5rem auto;\n  box-shadow: 0 10px 16px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19) !important;\n}\n\npre.highlight {\n  font-size: 1rem;\n  background: #F8FAFF;\n  margin: 2rem;\n  padding: 2rem;\n  border: 4px dashed pink;\n}"
+	],
+	"names": [],
+	"mappings": "AAAA,AAAA,CAAC,AAAC,CACD,SAAS,CAAE,OAAO,CACjB,MAAM,CAAE,MAAM,CACf,AAED,AAAA,EAAE,CAAE,EAAE,CAAE,EAAE,AAAC,CACT,KAAK,CAAE,OAAO,CACd,WAAW,CAAE,KAAK,CAClB,MAAM,CAAE,QAAQ,CACjB,AAED,AAAA,EAAE,AAAC,CACD,SAAS,CAAE,IAAI,CACf,WAAW,CAAE,GAAG,CACjB,AAED,AAAA,EAAE,AAAC,CACD,SAAS,CAAE,IAAI,CACf,WAAW,CAAE,GAAG,CACjB,AAED,AAAA,EAAE,AAAC,CACD,SAAS,CAAE,MAAM,CAClB,AAED,AAAA,GAAG,AAAC,CACF,OAAO,CAAE,KAAK,CACd,MAAM,CAAE,WAAW,CACnB,UAAU,CAAE,CAAC,CAAC,IAAI,CAAC,IAAI,CAAC,CAAC,CAAC,eAAe,CAAC,CAAC,CAAC,GAAG,CAAC,IAAI,CAAC,CAAC,CAAC,gBAAgB,CAAC,UAAU,CACnF,AAED,AAAA,GAAG,AAAA,UAAU,AAAC,CACZ,SAAS,CAAE,IAAI,CACf,UAAU,CAAE,OAAO,CACnB,MAAM,CAAE,IAAI,CACZ,OAAO,CAAE,IAAI,CACb,MAAM,CAAE,eAAe,CACxB"
+}
